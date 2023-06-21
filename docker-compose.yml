@@ -1,0 +1,31 @@
+version: '3.1'
+
+services:
+  app:
+    build:
+      context: .
+    volumes:
+      - ./app:/app
+    environment:
+      - MYSQL_HOST=db
+      - MYSQL_USER=testuser
+      - MYSQL_PASSWORD=testpassword
+      - MYSQL_DB=testdb
+    container_name: ECSite_mysql_sample
+    depends_on:
+      - db
+
+  db:
+    image: mysql:latest
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: devdev  # ルートユーザーのパスワード
+      MYSQL_DATABASE: testdb # 初回起動時に作成するデータベース名
+      MYSQL_USER: testuser # 初回起動時に作成するユーザー名
+      MYSQL_PASSWORD: testpassword # 初回起動時に作成するユーザーのパスワード
+    volumes:
+      - ./mysql-data:/var/lib/mysql
+    ports:
+      - 3306:3306
+    container_name: mysql_test # コンテナ名
