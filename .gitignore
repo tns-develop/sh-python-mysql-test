@@ -1,1 +1,7 @@
 mysql-data/*
+app/output/*
+app/log/*
+app/src/__pycache__/*
+app/src/utils/__pycache__/*
+app/src/logic/__pycache__/*
+app/src/db/__pycache__/*
