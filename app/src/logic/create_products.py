@@ -11,15 +11,18 @@ def main():
     target_date = sys.argv[2]
 
     # 取得対象情報
-    process_name = '注文情報出力処理'
-    sql_file = f'{const.SQL_FILE_DIR}/get_orders.sql'
-    output_file = f'{const.CSV_OUTPUT_DIR}/output_orders_{target_date}.csv'
+    process_name = '商品情報出力処理'
+    sql_file = f'{const.SQL_FILE_DIR}/get_products.sql'
+    output_file = f'{const.CSV_OUTPUT_DIR}/output_products_{target_date}.csv'
+    log_file = f'{const.LOG_OUTPUT_DIR}/output_products_{target_date}.log'
     output_dir = os.path.dirname(output_file)
-    log_file = f'{const.LOG_OUTPUT_DIR}/output_orders_{target_date}.log'
+    log_dir = os.path.dirname(log_file)
 
     # ディレクトリが存在しなければ作成する
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
 
     # 処理開始
     logger = Logger(__name__, log_file)
