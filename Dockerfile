@@ -9,6 +9,12 @@ RUN apt-get update && apt-get install -y \
     tree \
     && rm -rf /var/lib/apt/lists/*
 
+# タイムゾーンを日本時間に設定
+RUN DEBIAN_FRONTEND=noninteractive \
+    ln -fs /usr/share/zoneinfo/Asia/Tokyo /etc/localtime && \
+    apt-get update && apt-get install -y tzdata && \
+    dpkg-reconfigure --frontend noninteractive tzdata
+
 # Pythonのライブラリをアップグレード
 RUN python3 -m pip install --upgrade pip
 

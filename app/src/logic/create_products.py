@@ -1,6 +1,7 @@
 import sys
 import os
 import csv
+import time
 from ..db import ConnectDb
 from ..utils import Logger
 from ..utils import const
@@ -9,6 +10,7 @@ def main():
     # 初期処理
     connect_info = sys.argv[1]
     target_date = sys.argv[2]
+    start_time = time.time()
 
     # 取得対象情報
     process_name = '商品情報出力処理'
@@ -26,7 +28,7 @@ def main():
 
     # 処理開始
     logger = Logger(__name__, log_file)
-    logger.info(f'{process_name} 開始 接続先=「{connect_info}」 対象日：「{target_date}」')
+    logger.info(f'{process_name} 開始 接続先：「{connect_info}」 対象日：「{target_date}」')
 
     # DB接続
     db = ConnectDb(connect_info)
@@ -45,10 +47,14 @@ def main():
         num_results = len(results)
 
         with open(output_file, 'w', newline='', encoding='utf-8') as f:
-            writer = csv.writer(f, quoting=csv.QUOTE_NONNUMERIC)
+            writer = csv.writer(f, quoting=csv.QUOTE_ALL)
             writer.writerows(results)
 
-        logger.info(f'{process_name} 正常終了  ファイル出力件数={num_results}件', )
+        # 処理終了時間を取得し、処理時間を計算
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+
+        logger.info(f'{process_name} 正常終了  ファイル出力件数：{num_results}件 計算時間：{elapsed_time:.3f}秒', )
     except Exception as e:
         logger.error(f'{process_name} 異常終了  エラー情報: {e}', )
     finally:
