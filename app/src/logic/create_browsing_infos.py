@@ -5,6 +5,7 @@ import time
 import re
 from collections import defaultdict
 from urllib.parse import urlparse
+from datetime import datetime
 from ..db import ConnectDb
 from ..utils import Logger
 from ..utils import const
@@ -32,7 +33,7 @@ def main():
 
     # 処理開始
     logger = Logger(__name__, log_file)
-    logger.info(f'{process_name} 開始 接続先：「{connect_info}」 対象日：「{target_date}」')
+    logger.info(f'{process_name} 開始 接続先：「{connect_info}」 対象日：「{target_date}」 対象ログファイル：「{target_log}」')
 
     # DB接続
     db = ConnectDb(connect_info)
@@ -52,7 +53,7 @@ def main():
 
         # 取得した情報をキー:URL、値:情報詳細の辞書に変換
         for result in results:
-            browsing_info_dict[result[0]] = result[1:]
+            browsing_info_dict[result[0]] = result[1]
     except Exception as e:
         logger.error(f'閲覧情報テーブルのデータ取得に失敗しました。: {e}')
         return
@@ -63,8 +64,7 @@ def main():
     log_data = {}
     try:
         # browsing_info_dictのキーをリストに変換
-        url_list = list(browsing_info_dict.keys())
-        log_data = parse_log_file(target_log, url_list)
+        log_data = parse_log_file(target_log, browsing_info_dict)
     except Exception as e:
         logger.error(f'ログファイルの解析に失敗しました。: {e}')
         return
@@ -85,17 +85,19 @@ def main():
     except Exception as e:
         logger.error(f'{process_name} 異常終了  エラー情報: {e}', )
 
-def parse_log_file(log_file_path, url_list):
+def parse_log_file(log_file_path, browsing_info_dict):
     """ログファイルをパースして、IPアドレス、アクセス日時、アクセスURLの組み合わせごとのアクセス回数を集計する
     
     Args:
         log_file_path (str): ログファイルのパス
-        url_list (list): 閲覧情報テーブルのURLリスト
+        browsing_info_dict (dict): URLをキー、閲覧情報を値とする辞書
     
     Returns:
-        dict: IPアドレス、アクセス日時、アクセスURLの組み合わせごとのアクセス回数
+        list: IPアドレス、アクセス日時、アクセスURL、閲覧情報、アクセス回数のリスト
     """
     
+    url_list = list(browsing_info_dict.keys())
+
     # ログファイルのパースに使用する正規表現
     pattern = re.compile(
         r"(?P<ip>\d+\.\d+\.\d+\.\d+)"  # IPアドレス
@@ -114,9 +116,16 @@ def parse_log_file(log_file_path, url_list):
                 url_path = urlparse(match.group("url")).path.split('/')[-1]
                 # url_pathがurl_listに含まれている場合のみ集計対象とする
                 if url_path in url_list:
-                    data[match.group("ip"), match.group("datetime"), match.group("url")] += 1
+                    data[match.group("ip"), match.group("datetime"), url_path] += 1
 
-    return data
+    # dictに変換（ついでにアウトプットの形式に変換）
+    results = []
+    for (ip, dt, url), cnt in data.items():
+        dt_obj = datetime.strptime(dt, "%d/%b/%Y:%H:%M:%S %z")
+        formatted_dt = dt_obj.strftime("%Y/%m/%d %H:%M:%S")
+        results.append((ip, formatted_dt, url, str(browsing_info_dict[url]), str(cnt)))
+
+    return results
 
 if __name__ == "__main__":
     main()
